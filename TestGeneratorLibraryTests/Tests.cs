@@ -1,18 +1,15 @@
+﻿using System;
 using NUnit.Framework;
 
-namespace TestGeneratorTests
+namespace TestGeneratorLibraryTests
 {
+    [TestFixture]
     public class Tests
     {
-        [SetUp]
-        public void Setup()
-        {
-        }
-
         [Test]
         public void Test1()
         {
-            Assert.Pass();
+            Assert.True(true);
         }
     }
 }
