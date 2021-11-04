@@ -1,17 +1,18 @@
-using System.Threading.Tasks.Dataflow;
+using System.Collections.Generic;
 
 namespace TestGeneratorLibrary
 {
     public class TestGenerator
     {
+        
         public TestGenerator()
         {
             
         }
 
-        public void Generate()
+        public Dictionary<string,string> Generate()
         {
-            
+            return null;
         }
     }
 }
