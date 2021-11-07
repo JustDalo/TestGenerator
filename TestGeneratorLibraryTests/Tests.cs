@@ -18,9 +18,6 @@ namespace TestGeneratorLibraryTests
 
             classOneName = "";
             classTwoName = "";
-
-            generatedTests = new TestGenerator();
-            
         }
         [Test]
         public void Test1()

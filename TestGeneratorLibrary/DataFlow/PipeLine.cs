@@ -3,8 +3,10 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using TestGeneratorLibrary;
+using TestGeneratorLibrary.CodeAnalyze.AnalyzerImpl;
+using TestGeneratorLibrary.TestGenerator.TestGeneratorImpl;
 
-namespace ConsoleApplication
+namespace TestGeneratorLibrary.DataFlow
 {
     public class PipeLine
     {
@@ -12,6 +14,7 @@ namespace ConsoleApplication
         {
             var execOption = new ExecutionDataflowBlockOptions() {MaxDegreeOfParallelism = pipeLineRestriction};
             var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
+            
             var readFile = new TransformBlock<string, string>(async path =>
             {
                 using (var reader = new StreamReader(path))
@@ -22,8 +25,8 @@ namespace ConsoleApplication
 
             var generateTestClasses = new TransformManyBlock<string, KeyValuePair<string, string>>(async sourceCode => 
             {
-                var fileInfo = await Task.Run(() => new TestGenerator().Generate());
-                return await Task.Run((() => new CodeAnalyzer().AnalyzeFile()));
+                var fileInfo = await Task.Run(() => new CodeAnalyzer().AnalyzeFile(sourceCode));
+                return await Task.Run(() => new TestGenerator.TestGeneratorImpl.TestGenerator().Generate(fileInfo));
             },execOption);
             
             var writeFile = new ActionBlock<KeyValuePair<string, string>>(async path =>

@@ -40,12 +40,16 @@
     <ItemGroup>
         <Compile Include="Program.cs" />
         <Compile Include="Properties\AssemblyInfo.cs" />
+        <Compile Include="TestedFiles\Class1.cs" />
     </ItemGroup>
     <ItemGroup>
       <ProjectReference Include="..\TestGeneratorLibrary\TestGeneratorLibrary.csproj">
         <Project>{5e9e312a-6abc-422b-aed6-b03f8f5dad8c}</Project>
         <Name>TestGeneratorLibrary</Name>
       </ProjectReference>
+    </ItemGroup>
+    <ItemGroup>
+      <Folder Include="ResultedFiles" />
     </ItemGroup>
     <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
     <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
