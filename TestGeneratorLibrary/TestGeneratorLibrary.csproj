@@ -139,6 +139,11 @@
         <Compile Include="Properties\AssemblyInfo.cs" />
         <Compile Include="TestGenerator\IGenerator.cs" />
         <Compile Include="TestGenerator\TestGeneratorImpl\TestGenerator.cs" />
+        <Compile Include="TestStructureInfo\ClassInfo.cs" />
+        <Compile Include="TestStructureInfo\ConstructorInfo.cs" />
+        <Compile Include="TestStructureInfo\FileInfo.cs" />
+        <Compile Include="TestStructureInfo\MethodInfo.cs" />
+        <Compile Include="TestStructureInfo\ParameterInfo.cs" />
     </ItemGroup>
     <ItemGroup>
       <None Include="packages.config" />
