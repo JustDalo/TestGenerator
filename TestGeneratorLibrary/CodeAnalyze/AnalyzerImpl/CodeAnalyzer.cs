@@ -51,10 +51,10 @@ namespace TestGeneratorLibrary.CodeAnalyze.AnalyzerImpl
 
         private ConstructorInfo GetConstructorInfo(ConstructorDeclarationSyntax constructor)
         {
-            var parameters = new List<string>();
+            var parameters = new List<ParameterInfo>();
             foreach (var parameter in constructor.ParameterList.Parameters)
             {
-                parameters.Add(parameter.Identifier.Parent?.ToString());
+                parameters.Add(new ParameterInfo(parameter.Type?.ToString(), parameter.Identifier.ValueText));
             }
             return new ConstructorInfo(parameters, constructor.Identifier.Text);
         }
