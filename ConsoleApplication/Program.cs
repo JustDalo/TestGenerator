@@ -7,7 +7,7 @@ namespace ConsoleApplication
     {
         public static void Main(string[] args)
         {
-            var filesName = new string[] { "Class1.cs" };
+            var filesName = new string[] { "Class1.cs", "Class2.cs" };
             
             new PipeLine().Generate(@"..\..\TestedFiles", filesName, @"..\..\ResultedFiles", 2);
             Console.ReadLine();
