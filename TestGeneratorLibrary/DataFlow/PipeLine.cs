@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
-using TestGeneratorLibrary;
 using TestGeneratorLibrary.CodeAnalyze.AnalyzerImpl;
 using TestGeneratorLibrary.TestGenerator.TestGeneratorImpl;
 
@@ -14,7 +13,7 @@ namespace TestGeneratorLibrary.DataFlow
         {
             var execOption = new ExecutionDataflowBlockOptions() {MaxDegreeOfParallelism = pipeLineRestriction};
             var linkOptions = new DataflowLinkOptions {PropagateCompletion = true};
-            
+            Directory.CreateDirectory(destinationPath);
             var readFile = new TransformBlock<string, string>(async path =>
             {
                 using (var reader = new StreamReader(path))
@@ -23,12 +22,13 @@ namespace TestGeneratorLibrary.DataFlow
                 }
             }, execOption);
 
-            var generateTestClasses = new TransformManyBlock<string, KeyValuePair<string, string>>(async sourceCode => 
-            {
-                var fileInfo = await Task.Run(() => new CodeAnalyzer().AnalyzeFile(sourceCode));
-                return await Task.Run(() => new TestGenerator.TestGeneratorImpl.TestGenerator().Generate(fileInfo));
-            },execOption);
-            
+            var generateTestClasses = new TransformManyBlock<string, KeyValuePair<string, string>>(
+                async sourceCode =>
+                {
+                    var fileInfo = await Task.Run(() => new CodeAnalyzer().AnalyzeFile(sourceCode));
+                    return await Task.Run(() => new TestGenerator.TestGeneratorImpl.TestGenerator().Generate(fileInfo));
+                }, execOption);
+
             var writeFile = new ActionBlock<KeyValuePair<string, string>>(async path =>
             {
                 using (var writer = new StreamWriter(destinationPath + '\\' + path.Key + ".cs"))
@@ -44,7 +44,7 @@ namespace TestGeneratorLibrary.DataFlow
             {
                 readFile.Post(sourcePath + @"\" + file);
             }
-            
+
             readFile.Complete();
             return writeFile.Completion;
         }
