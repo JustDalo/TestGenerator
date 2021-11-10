@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Permissions;
 using System.Text;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.Editing;
@@ -47,17 +46,93 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
 
         private SyntaxNode CreateClassDefinition(ClassInfo classInfo)
         {
+            var constructor = classInfo.Constructors.Last();
+            var classBody = new List<SyntaxNode>();
+            classBody.AddRange(CreateTestFields(constructor));
+            classBody.Add(CreateSetUpMethod(constructor));
+            classBody.AddRange(CreateTestMethods(classInfo));
+
             var classAttribute = _generator.Attribute("TestFixture");
             var classDefinition = _generator.ClassDeclaration(
-                classInfo.ClassName,
+                classInfo.ClassName + "Test",
                 typeParameters: null,
                 accessibility: Accessibility.Public,
                 modifiers: DeclarationModifiers.None,
                 baseType: null,
                 interfaceTypes: null,
-                members: CreateTestMethods(classInfo));
+                members: classBody);
             var classDefinitionAttribute = _generator.AddAttributes(classDefinition, classAttribute);
             return classDefinitionAttribute;
+        }
+
+        private SyntaxNode CreateSetUpMethod(ConstructorInfo constructor)
+        {
+            var attribute = _generator.Attribute("SetUp");
+            var setUpMethod = _generator.MethodDeclaration(
+                "SetUp",
+                null,
+                null,
+                null,
+                Accessibility.Public,
+                DeclarationModifiers.None,
+                GetSetUpBody(constructor));
+            var setUpMethodAttribute = _generator.AddAttributes(setUpMethod, attribute);
+            return setUpMethodAttribute;
+        }
+
+        private List<SyntaxNode> GetSetUpBody(ConstructorInfo constructor)
+        {
+            var setUpBodyFields = new List<SyntaxNode>();
+            var parameters = new StringBuilder();
+            ParameterInfo last = constructor.Parameters.Last();
+            foreach (var parameter in constructor.Parameters)
+            {
+                if (parameter.ParameterType[0] == 'I')
+                {
+                    setUpBodyFields.Add(
+                        _generator.IdentifierName(
+                            $@"_{parameter.ParameterName} = new Mock<{parameter.ParameterType}>()"));
+                    parameters.Append(parameter.Equals(last)
+                        ? $@"_{parameter.ParameterName}.object"
+                        : $@"_{parameter.ParameterName}.object, ");
+                }
+                else
+                {
+                    setUpBodyFields.Add(_generator.IdentifierName(
+                        $@"var {parameter.ParameterName} = default({parameter.ParameterType})"));
+                    parameters.Append(parameter.Equals(last)
+                        ? $@"{parameter.ParameterName}"
+                        : $@"{parameter.ParameterName}, ");
+                }
+            }
+
+            setUpBodyFields.Add(
+                _generator.IdentifierName($@"_{constructor.Name.ToLower()} = new {constructor.Name}({parameters})"));
+            return setUpBodyFields;
+        }
+
+        private List<SyntaxNode> CreateTestFields(ConstructorInfo constructor)
+        {
+            var testFields = new List<SyntaxNode>();
+            foreach (var parameter in constructor.Parameters)
+            {
+                if (parameter.ParameterType[0] == 'I')
+                {
+                    testFields.Add(_generator.FieldDeclaration(
+                        "_" + parameter.ParameterName,
+                        _generator.IdentifierName($@"Mock<{parameter.ParameterType}>"),
+                        Accessibility.Private
+                    ));
+                }
+            }
+
+            testFields.Add(_generator.FieldDeclaration(
+                "_" + constructor.Name.ToLower(),
+                _generator.IdentifierName($@"{constructor.Name}"),
+                Accessibility.Private)
+            );
+
+            return testFields;
         }
 
         private List<SyntaxNode> CreateTestMethods(ClassInfo classInfo)
@@ -73,7 +148,7 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
                     null,
                     Accessibility.Public,
                     DeclarationModifiers.None,
-                    GetMethodBody(method)
+                    GetMethodBody(classInfo, method)
                 );
                 var methodTestAttribute = _generator.AddAttributes(methodTest, attribute);
                 testMethods.Add(methodTestAttribute);
@@ -82,12 +157,13 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
             return testMethods;
         }
 
-        private List<SyntaxNode> GetMethodBody(MethodInfo methodInfo)
+        private List<SyntaxNode> GetMethodBody(ClassInfo classInfo, MethodInfo methodInfo)
         {
+            var constructor = classInfo.Constructors.Last();
             var methodStatements = new List<SyntaxNode>();
             methodStatements.AddRange(GetMethodArrangeBlock(methodInfo));
-            methodStatements.Add(GetMethodActBlock(methodInfo));
-            methodStatements.AddRange(GetMethodAssertBlock());
+            methodStatements.Add(GetMethodActBlock(constructor, methodInfo));
+            methodStatements.AddRange(GetMethodAssertBlock(methodInfo));
             return methodStatements;
         }
 
@@ -105,7 +181,7 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
             return fields;
         }
 
-        private SyntaxNode GetMethodActBlock(MethodInfo methodInfo)
+        private SyntaxNode GetMethodActBlock(ConstructorInfo constructor, MethodInfo methodInfo)
         {
             var parameterList = new StringBuilder();
             if (methodInfo.Parameters.Capacity != 0)
@@ -128,22 +204,31 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
 
             if (methodInfo.ReturnType == "void")
             {
-                return _generator.IdentifierName($@"{methodInfo.Name}({parameterList})");
+                return _generator.IdentifierName($@"_{constructor.Name.ToLower()}.{methodInfo.Name}({parameterList})");
             }
+
             return _generator.IdentifierName(
-                $@"{methodInfo.ReturnType} actual = {methodInfo.Name}({parameterList})");
+                $@"{methodInfo.ReturnType} actual = _{constructor.Name.ToLower()}.{methodInfo.Name}({parameterList})");
         }
 
-        private List<SyntaxNode> GetMethodAssertBlock()
+        private List<SyntaxNode> GetMethodAssertBlock(MethodInfo methodInfo)
         {
-            var assertBlock = new List<SyntaxNode>()
+            if (methodInfo.ReturnType == "void")
             {
-                _generator.IdentifierName("int expected = 0"),
-                _generator.IdentifierName("Assert.That(actual, Is.EqualTo(expected))"),
-                _generator.IdentifierName("Assert.Fail(\"autogenerated\")"),
-            };
-
-            return assertBlock;
+                return new List<SyntaxNode>()
+                {
+                    _generator.IdentifierName("Assert.Fail(\"autogenerated\")"),
+                };
+            }
+            else
+            {
+                return new List<SyntaxNode>()
+                {
+                    _generator.IdentifierName("int expected = 0"),
+                    _generator.IdentifierName("Assert.That(actual, Is.EqualTo(expected))"),
+                    _generator.IdentifierName("Assert.Fail(\"autogenerated\")"),
+                };
+            }
         }
     }
 }
