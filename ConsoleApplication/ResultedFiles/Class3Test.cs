@@ -3,6 +3,7 @@ using NUnit.Framework;
 using System.Collections.Generic;
 using System.Linq;
 using TestGeneratorLibrary;
+using Moq;
 
 namespace Class3Test
 {
@@ -19,7 +20,7 @@ namespace Class3Test
             _c = new Mock<ICloneable>();
             var a = default(int);
             var str = default(string);
-            _class3 = new Class3(_s.object, _c.object, a, str);
+            _class3 = new Class3(_s.Object, _c.Object, a, str);
         }
 
         [Test]
