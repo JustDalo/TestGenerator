@@ -1,10 +1,11 @@
+
+
 using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using TestGeneratorLibrary.TestStructureInfo;
-using CompilationUnitSyntax = Microsoft.CodeAnalysis.CSharp.Syntax.CompilationUnitSyntax;
 
 namespace TestGeneratorLibrary.CodeAnalyze.AnalyzerImpl
 {
