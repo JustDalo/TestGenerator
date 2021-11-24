@@ -4,7 +4,7 @@ namespace TestGeneratorLibrary.TestStructureInfo
 {
     public class FileInfo
     {
-        public List<ClassInfo> Classes{ get; set; }
+        public List<ClassInfo> Classes;
 
         public FileInfo(List<ClassInfo> classes)
         {

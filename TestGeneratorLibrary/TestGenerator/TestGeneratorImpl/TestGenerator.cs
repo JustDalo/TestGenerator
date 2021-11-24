@@ -38,6 +38,7 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
                 _generator.NamespaceImportDeclaration("System.Collections.Generic"),
                 _generator.NamespaceImportDeclaration("System.Linq"),
                 _generator.NamespaceImportDeclaration("TestGeneratorLibrary"),
+                _generator.NamespaceImportDeclaration("Moq"),
 
                 _generator.NamespaceDeclaration(classInfo.ClassName + "Test", CreateClassDefinition(classInfo)),
             };
@@ -51,7 +52,6 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
             classBody.AddRange(CreateTestFields(constructor));
             classBody.Add(CreateSetUpMethod(constructor));
             classBody.AddRange(CreateTestMethods(classInfo));
-
             var classAttribute = _generator.Attribute("TestFixture");
             var classDefinition = _generator.ClassDeclaration(
                 classInfo.ClassName + "Test",
@@ -93,8 +93,8 @@ namespace TestGeneratorLibrary.TestGenerator.TestGeneratorImpl
                         _generator.IdentifierName(
                             $@"_{parameter.ParameterName} = new Mock<{parameter.ParameterType}>()"));
                     parameters.Append(parameter.Equals(last)
-                        ? $@"_{parameter.ParameterName}.object"
-                        : $@"_{parameter.ParameterName}.object, ");
+                        ? $@"_{parameter.ParameterName}.Object"
+                        : $@"_{parameter.ParameterName}.Object, ");
                 }
                 else
                 {
